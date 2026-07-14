@@ -1,5 +1,6 @@
 import React from "react";
 import { Modal, View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import MaterialIcon from "../MaterialIcon/MaterialIcon";
 
 const formatCash = (amount) => {
   const fixed = amount.toFixed(3).replace(/0+$/, "").replace(/\.$/, "");
@@ -13,6 +14,8 @@ const PRIZE_LABELS = {
   cash: (amt) => formatCash(amt)
 };
 
+// This is the ONLY place the words "Silver" / "Gold" / "Diamond" appear -
+// everywhere else (TopBar, wheel wedges) uses MaterialIcon instead.
 const PrizeResultModal = ({ visible, prize, onClose }) => {
   if (!prize) return null;
   const isDud = prize.type === "dud";
@@ -23,7 +26,12 @@ const PrizeResultModal = ({ visible, prize, onClose }) => {
       <View style={styles.overlay}>
         <View style={[styles.card, isDud && styles.cardDud]}>
           <Text style={styles.title}>{isDud ? "No Luck This Time" : "You Won!"}</Text>
-          {!isDud && <Text style={styles.prize}>{label}</Text>}
+          {!isDud && (
+            <View style={styles.prizeRow}>
+              <MaterialIcon type={prize.type} size={26} />
+              <Text style={styles.prize}>{label}</Text>
+            </View>
+          )}
           <TouchableOpacity style={styles.button} onPress={onClose} activeOpacity={0.85}>
             <Text style={styles.buttonText}>Continue</Text>
           </TouchableOpacity>
@@ -46,12 +54,13 @@ const styles = StyleSheet.create({
     borderColor: "#FFD700"
   },
   cardDud: { borderColor: "#3A3A55" },
-  title: { fontSize: 18, fontWeight: "700", color: "#FFD700", marginBottom: 10 },
-  prize: { fontSize: 22, fontWeight: "800", color: "#FFFFFF", marginBottom: 20 },
+  title: { fontSize: 18, fontWeight: "700", color: "#FFD700", marginBottom: 14 },
+  prizeRow: { flexDirection: "row", alignItems: "center", marginBottom: 20, gap: 10 },
+  prize: { fontSize: 22, fontWeight: "800", color: "#FFFFFF" },
   button: { backgroundColor: "#FFD700", paddingHorizontal: 32, paddingVertical: 10, borderRadius: 12, marginTop: 10 },
   buttonText: { color: "#1A1A2E", fontWeight: "700", fontSize: 14 }
 });
 
 export default PrizeResultModal;
 
-// FILE LOCATION: src/components/PrizeResultModal/PrizeResultModal.js (unchanged)
+// FILE LOCATION: src/components/PrizeResultModal/PrizeResultModal.js (REPLACE existing file)

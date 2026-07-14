@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { pickWeighted } from "../../utils/weightedRandom";
 
 const WIN_CHANCE = 0.22;
+const RESULT_SUSPENSE_MS = 350; // brief pause after the last reel stops, before the result fires
 
 // symbolWeights: [{ symbol, weight }]   prizeMap: { [symbol]: prize }
 // zeroDud: if true, every pull is forced into a 3-match (VIP variant).
@@ -37,9 +38,11 @@ const SlotMachine = ({ symbolWeights, prizeMap, onResult, zeroDud, disabled }) =
       }
     }
 
+    // Slower, staggered reel stops (900ms / 1500ms / 2100ms) so a pull
+    // takes a couple of seconds instead of finishing almost instantly.
     [0, 1, 2].forEach((reelIndex) => {
-      const spinDuration = 600 + reelIndex * 350;
-      const interval = 70;
+      const spinDuration = 900 + reelIndex * 600;
+      const interval = 80;
       let elapsed = 0;
 
       const cycle = () => {
@@ -57,13 +60,17 @@ const SlotMachine = ({ symbolWeights, prizeMap, onResult, zeroDud, disabled }) =
             return next;
           });
           if (reelIndex === 2) {
-            setSpinning(false);
-            const isWin = finalReels[0] === finalReels[1] && finalReels[1] === finalReels[2];
-            if (isWin) {
-              onResult(prizeMap[finalReels[0]], { symbol: finalReels[0] });
-            } else {
-              onResult({ type: "dud", amount: 0 }, null);
-            }
+            timers.current.push(
+              setTimeout(() => {
+                setSpinning(false);
+                const isWin = finalReels[0] === finalReels[1] && finalReels[1] === finalReels[2];
+                if (isWin) {
+                  onResult(prizeMap[finalReels[0]], { symbol: finalReels[0] });
+                } else {
+                  onResult({ type: "dud", amount: 0 }, null);
+                }
+              }, RESULT_SUSPENSE_MS)
+            );
           }
           return;
         }

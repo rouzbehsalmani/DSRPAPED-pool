@@ -49,38 +49,49 @@ export const AUTO_SIMULATE_INTERVAL_MS = 2000;
 // tick is triggered. Swap this trigger for a real Ad Network SDK in Phase 10.
 export const GAMEPLAY_AD_INTERVAL = 4;
 
+// Energy / stamina cooldown - every play costs ENERGY_PER_PLAY, and the bar
+// refills passively from 0 to ENERGY_MAX over ENERGY_FULL_REGEN_MS. This is
+// what keeps a play session from being over in a minute even though each
+// individual mini-game round is quick.
+export const ENERGY_MAX = 100;
+export const ENERGY_PER_PLAY = 20; // 5 plays drains a full bar
+export const ENERGY_FULL_REGEN_MS = 10 * 60 * 1000; // 10 minutes, 0 -> 100
+
 // ---------------------------------------------------------------------------
 // Phase 3-8: Mini-game prize configuration
 // Every prize table below is WEIGHT-BASED: each entry carries a `weight`
 // (relative likelihood, not a percentage) so lower-value outcomes are common
 // and higher-value outcomes are rare. Prize shape: { type, amount }
 // type is one of "silver" | "gold" | "diamond" | "cash" | "dud"
+//
+// Spin Wheel segments now carry `icon` + `amount` (rendered as a small
+// vector icon + number on the wedge, see MaterialIcon) instead of a text
+// label - this is what keeps labels from spilling out of their wedge.
+// Wedge WEIGHT still drives the real odds (see SpinWheel.js) even though
+// every wedge is drawn the same visual size, like a normal casino wheel.
 // ---------------------------------------------------------------------------
 
-// Spin Wheel - exactly 8 segments, wedge size on screen is proportional to
-// `weight`, and the winning wedge is chosen with that same weight so the
-// wheel's visuals always match the real odds.
 export const SPIN_WHEEL_WEIGHTED_PRIZES = [
-  { label: "Try Again", weight: 30, color: "#3A3A55", prize: { type: "dud", amount: 0 } },
-  { label: "1 Silver", weight: 20, color: "#8C8C9A", prize: { type: "silver", amount: 1 } },
-  { label: "3 Silver", weight: 14, color: "#A0A0AE", prize: { type: "silver", amount: 3 } },
-  { label: "$0.001", weight: 13, color: "#4CAF50", prize: { type: "cash", amount: 0.001 } },
-  { label: "1 Gold", weight: 9, color: "#D4AF37", prize: { type: "gold", amount: 1 } },
-  { label: "1 Diamond", weight: 5, color: "#59C7F2", prize: { type: "diamond", amount: 1 } },
-  { label: "$0.01", weight: 5, color: "#2E9E4F", prize: { type: "cash", amount: 0.01 } },
-  { label: "5 Silver", weight: 4, color: "#8C8C9A", prize: { type: "silver", amount: 5 } }
+  { icon: "dud", amount: null, weight: 30, color: "#3A3A55", prize: { type: "dud", amount: 0 } },
+  { icon: "silver", amount: 1, weight: 20, color: "#8C8C9A", prize: { type: "silver", amount: 1 } },
+  { icon: "silver", amount: 3, weight: 14, color: "#A0A0AE", prize: { type: "silver", amount: 3 } },
+  { icon: "cash", amount: 0.001, weight: 13, color: "#4CAF50", prize: { type: "cash", amount: 0.001 } },
+  { icon: "gold", amount: 1, weight: 9, color: "#D4AF37", prize: { type: "gold", amount: 1 } },
+  { icon: "diamond", amount: 1, weight: 5, color: "#59C7F2", prize: { type: "diamond", amount: 1 } },
+  { icon: "cash", amount: 0.01, weight: 5, color: "#2E9E4F", prize: { type: "cash", amount: 0.01 } },
+  { icon: "silver", amount: 5, weight: 4, color: "#8C8C9A", prize: { type: "silver", amount: 5 } }
 ];
 
 // VIP wheel - zero-dud, still weighted so jackpot-tier cash is rare.
 export const VIP_SPIN_WHEEL_WEIGHTED_PRIZES = [
-  { label: "3 Gold", weight: 28, color: "#D4AF37", prize: { type: "gold", amount: 3 } },
-  { label: "5 Gold", weight: 20, color: "#D4AF37", prize: { type: "gold", amount: 5 } },
-  { label: "1 Diamond", weight: 20, color: "#59C7F2", prize: { type: "diamond", amount: 1 } },
-  { label: "2 Diamond", weight: 14, color: "#59C7F2", prize: { type: "diamond", amount: 2 } },
-  { label: "$0.01", weight: 10, color: "#2E9E4F", prize: { type: "cash", amount: 0.01 } },
-  { label: "3 Diamond", weight: 5, color: "#59C7F2", prize: { type: "diamond", amount: 3 } },
-  { label: "$0.05", weight: 2, color: "#2E9E4F", prize: { type: "cash", amount: 0.05 } },
-  { label: "$0.10", weight: 1, color: "#2E9E4F", prize: { type: "cash", amount: 0.10 } }
+  { icon: "gold", amount: 3, weight: 28, color: "#D4AF37", prize: { type: "gold", amount: 3 } },
+  { icon: "gold", amount: 5, weight: 20, color: "#D4AF37", prize: { type: "gold", amount: 5 } },
+  { icon: "diamond", amount: 1, weight: 20, color: "#59C7F2", prize: { type: "diamond", amount: 1 } },
+  { icon: "diamond", amount: 2, weight: 14, color: "#59C7F2", prize: { type: "diamond", amount: 2 } },
+  { icon: "cash", amount: 0.01, weight: 10, color: "#2E9E4F", prize: { type: "cash", amount: 0.01 } },
+  { icon: "diamond", amount: 3, weight: 5, color: "#59C7F2", prize: { type: "diamond", amount: 3 } },
+  { icon: "cash", amount: 0.05, weight: 2, color: "#2E9E4F", prize: { type: "cash", amount: 0.05 } },
+  { icon: "cash", amount: 0.10, weight: 1, color: "#2E9E4F", prize: { type: "cash", amount: 0.10 } }
 ];
 
 export const SCRATCH_ICONS = ["🟡", "💎", "🥈", "💰", "⭐", "🔷"];

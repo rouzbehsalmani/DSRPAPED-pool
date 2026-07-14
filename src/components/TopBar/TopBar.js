@@ -1,9 +1,12 @@
-﻿// src/components/TopBar/TopBar.js
+// src/components/TopBar/TopBar.js
 
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { useEconomyStore } from "../../store/economyStore";
+import MaterialIcon from "../MaterialIcon/MaterialIcon";
 
+// Icon-only balance badges - no "Silver"/"Gold"/"Diamond"/"USD" words here.
+// The material name is only ever spelled out in the win modal (e.g. "3 Silver").
 const TopBar = ({ arpgCounterRef }) => {
   const silver = useEconomyStore((s) => s.silver);
   const gold = useEconomyStore((s) => s.gold);
@@ -14,24 +17,24 @@ const TopBar = ({ arpgCounterRef }) => {
   return (
     <View style={styles.container}>
       <View style={styles.counter}>
-        <Text style={styles.icon}>USD</Text>
-        <Text style={styles.value}>${walletCashBalance.toFixed(4)}</Text>
+        <MaterialIcon type="cash" size={16} />
+        <Text style={styles.value}>{walletCashBalance.toFixed(4)}</Text>
       </View>
       <View style={styles.counter}>
-        <Text style={styles.icon}>Silver</Text>
+        <MaterialIcon type="silver" size={16} />
         <Text style={styles.value}>{silver}</Text>
       </View>
       <View style={styles.counter}>
-        <Text style={styles.icon}>Gold</Text>
+        <MaterialIcon type="gold" size={16} />
         <Text style={styles.value}>{gold}</Text>
       </View>
       <View style={styles.counter}>
-        <Text style={styles.icon}>Diamond</Text>
+        <MaterialIcon type="diamond" size={16} />
         <Text style={styles.value}>{diamond}</Text>
       </View>
       <View style={styles.counter} ref={arpgCounterRef} collapsable={false}>
-        <Text style={styles.icon}>ARPG</Text>
-        <Text style={styles.value}>{arpg} ARPG</Text>
+        <MaterialIcon type="arpg" size={16} />
+        <Text style={styles.value}>{arpg}</Text>
       </View>
     </View>
   );
@@ -56,12 +59,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#26264A",
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 10
-  },
-  icon: {
-    fontSize: 11,
-    color: "#AAAAC0",
-    marginRight: 4
+    borderRadius: 10,
+    gap: 5
   },
   value: {
     color: "#FFFFFF",
@@ -71,3 +70,5 @@ const styles = StyleSheet.create({
 });
 
 export default TopBar;
+
+// FILE LOCATION: src/components/TopBar/TopBar.js (REPLACE existing file)

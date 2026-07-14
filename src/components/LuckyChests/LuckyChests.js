@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { pickWeighted } from "../../utils/weightedRandom";
 
 const CHEST_COUNT = 9;
+const OPENING_DELAY_MS = 650; // brief suspense beat before the chest reveals
 
 // Each of the 9 chests is drawn independently from the weighted prize
 // table, so the odds stay correct regardless of which single chest the
@@ -16,16 +17,24 @@ const drawAssignments = (prizeWeights) =>
 const LuckyChests = ({ prizeWeights, onResult, disabled }) => {
   const [assignments, setAssignments] = useState(() => drawAssignments(prizeWeights));
   const [openedIndex, setOpenedIndex] = useState(null);
+  const [openingIndex, setOpeningIndex] = useState(null);
+  const timerRef = useRef(null);
 
   const openChest = (index) => {
-    if (disabled || openedIndex !== null) return;
-    setOpenedIndex(index);
-    onResult(assignments[index], { chestIndex: index });
+    if (disabled || openedIndex !== null || openingIndex !== null) return;
+    setOpeningIndex(index);
+    timerRef.current = setTimeout(() => {
+      setOpeningIndex(null);
+      setOpenedIndex(index);
+      onResult(assignments[index], { chestIndex: index });
+    }, OPENING_DELAY_MS);
   };
 
   const resetChests = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
     setAssignments(drawAssignments(prizeWeights));
     setOpenedIndex(null);
+    setOpeningIndex(null);
   };
 
   return (
@@ -33,16 +42,22 @@ const LuckyChests = ({ prizeWeights, onResult, disabled }) => {
       <View style={styles.grid}>
         {assignments.map((_, index) => {
           const isOpened = openedIndex === index;
-          const isLocked = openedIndex !== null && !isOpened;
+          const isOpening = openingIndex === index;
+          const isLocked = (openedIndex !== null || openingIndex !== null) && !isOpened && !isOpening;
           return (
             <TouchableOpacity
               key={index}
-              style={[styles.chest, isOpened && styles.chestOpened, isLocked && styles.chestLocked]}
+              style={[
+                styles.chest,
+                isOpened && styles.chestOpened,
+                isOpening && styles.chestOpening,
+                isLocked && styles.chestLocked
+              ]}
               onPress={() => openChest(index)}
               activeOpacity={0.8}
-              disabled={disabled || openedIndex !== null}
+              disabled={disabled || openedIndex !== null || openingIndex !== null}
             >
-              <Text style={styles.chestIcon}>{isOpened ? "📦" : "🔒"}</Text>
+              <Text style={styles.chestIcon}>{isOpened ? "📦" : isOpening ? "✨" : "🔒"}</Text>
             </TouchableOpacity>
           );
         })}
@@ -71,6 +86,7 @@ const styles = StyleSheet.create({
     borderColor: "#3A3A55"
   },
   chestOpened: { backgroundColor: "#1A1A2E", borderColor: "#FFD700" },
+  chestOpening: { borderColor: "#FFD700", opacity: 0.85 },
   chestLocked: { opacity: 0.4 },
   chestIcon: { fontSize: 30 },
   resetButton: { marginTop: 12, backgroundColor: "#4CAF50", borderRadius: 14, paddingVertical: 12, paddingHorizontal: 28 },

@@ -1,11 +1,15 @@
 import React, { useRef, useState } from "react";
 import { View, Text, Animated, Easing, TouchableOpacity, StyleSheet } from "react-native";
-import Svg, { Path, Text as SvgText } from "react-native-svg";
+import Svg, { Path, G, Text as SvgText } from "react-native-svg";
 import { pickWeightedIndex } from "../../utils/weightedRandom";
+import { getIconShapes } from "../MaterialIcon/materialIconShapes";
 
 const SIZE = 260;
 const CENTER = SIZE / 2;
 const RADIUS = SIZE / 2 - 6;
+const ICON_BOX = 24; // materialIconShapes are authored in a 24x24 box
+const ICON_SIZE = 20; // rendered size inside a wedge
+const ICON_SCALE = ICON_SIZE / ICON_BOX;
 
 const polarToCartesian = (cx, cy, r, angleDeg) => {
   const rad = ((angleDeg - 90) * Math.PI) / 180;
@@ -19,23 +23,24 @@ const describeWedge = (cx, cy, r, startAngle, endAngle) => {
   return `M ${cx} ${cy} L ${start.x} ${start.y} A ${r} ${r} 0 ${largeArcFlag} 0 ${end.x} ${end.y} Z`;
 };
 
-// A real circular wheel drawn with SVG wedges. Each wedge's visual size is
-// proportional to its `weight`, and the winning wedge is selected using the
-// exact same weights - so what the player sees always matches the real odds.
-// segments: [{ label, color, weight, prize }]
+// A real circular wheel with EQUAL-SIZED wedges, like a normal casino wheel.
+// The real odds live only in each segment's `weight` (used to pick the
+// winner) - visual size never encodes probability, so the wheel always
+// looks standard while staying mathematically fair underneath.
+// Each wedge shows a small vector icon + a short number instead of a text
+// label, so nothing spills into the neighboring wedge.
+// segments: [{ icon, amount, weight, color, prize }]
 const SpinWheel = ({ segments, onResult, disabled }) => {
   const [spinning, setSpinning] = useState(false);
   const rotation = useRef(new Animated.Value(0)).current;
   const currentRotationRef = useRef(0);
 
-  const totalWeight = segments.reduce((sum, s) => sum + s.weight, 0);
-  let cumulative = 0;
-  const wedges = segments.map((seg) => {
-    const startAngle = cumulative;
-    const angleSize = (seg.weight / totalWeight) * 360;
-    cumulative += angleSize;
-    return { ...seg, startAngle, endAngle: cumulative, angleSize };
-  });
+  const sliceAngle = 360 / segments.length;
+  const wedges = segments.map((seg, i) => ({
+    ...seg,
+    startAngle: i * sliceAngle,
+    endAngle: (i + 1) * sliceAngle
+  }));
 
   const spin = () => {
     if (spinning || disabled) return;
@@ -43,15 +48,23 @@ const SpinWheel = ({ segments, onResult, disabled }) => {
 
     const winnerIndex = pickWeightedIndex(segments.map((s) => s.weight));
     const winner = wedges[winnerIndex];
-    const midAngle = winner.startAngle + winner.angleSize / 2;
+    const midAngle = winner.startAngle + sliceAngle / 2;
 
-    const extraSpins = 5;
-    const normalizedTarget = (360 - midAngle) % 360;
-    const target = currentRotationRef.current + extraSpins * 360 + normalizedTarget;
+    // Land exactly on the winner regardless of where the wheel currently
+    // rests (fixes drift that would otherwise creep in after every repeat
+    // spin): compute how far to rotate FROM the current resting angle, not
+    // from an assumed start of 0.
+    const currentVisual = ((currentRotationRef.current % 360) + 360) % 360;
+    const desiredVisual = (360 - midAngle) % 360;
+    let delta = desiredVisual - currentVisual;
+    if (delta < 0) delta += 360;
+
+    const extraSpins = 7;
+    const target = currentRotationRef.current + extraSpins * 360 + delta;
 
     Animated.timing(rotation, {
       toValue: target,
-      duration: 3600,
+      duration: 6200,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: true
     }).start(() => {
@@ -72,28 +85,39 @@ const SpinWheel = ({ segments, onResult, disabled }) => {
         <View style={styles.pointer} />
         <Animated.View style={{ transform: [{ rotate: spinDeg }] }}>
           <Svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}>
+            {wedges.map((seg, i) => (
+              <Path
+                key={`wedge-${i}`}
+                d={describeWedge(CENTER, CENTER, RADIUS, seg.startAngle, seg.endAngle)}
+                fill={seg.color}
+                stroke="#0F0F1E"
+                strokeWidth={2}
+              />
+            ))}
             {wedges.map((seg, i) => {
-              const mid = seg.startAngle + seg.angleSize / 2;
-              const labelPos = polarToCartesian(CENTER, CENTER, RADIUS * 0.62, mid);
+              const mid = seg.startAngle + sliceAngle / 2;
+              const iconPos = polarToCartesian(CENTER, CENTER, RADIUS * 0.68, mid);
+              const textPos = polarToCartesian(CENTER, CENTER, RADIUS * 0.42, mid);
+              const tx = iconPos.x - (ICON_BOX * ICON_SCALE) / 2;
+              const ty = iconPos.y - (ICON_BOX * ICON_SCALE) / 2;
               return (
-                <React.Fragment key={i}>
-                  <Path
-                    d={describeWedge(CENTER, CENTER, RADIUS, seg.startAngle, seg.endAngle)}
-                    fill={seg.color}
-                    stroke="#0F0F1E"
-                    strokeWidth={2}
-                  />
-                  <SvgText
-                    x={labelPos.x}
-                    y={labelPos.y}
-                    fill="#0F0F1E"
-                    fontSize="10"
-                    fontWeight="700"
-                    textAnchor="middle"
-                  >
-                    {seg.label}
-                  </SvgText>
-                </React.Fragment>
+                <G key={`label-${i}`}>
+                  <G transform={`translate(${tx} ${ty}) scale(${ICON_SCALE})`}>
+                    {getIconShapes(seg.icon)}
+                  </G>
+                  {seg.amount != null && (
+                    <SvgText
+                      x={textPos.x}
+                      y={textPos.y + 4}
+                      fontSize="11"
+                      fontWeight="700"
+                      fill="#0F0F1E"
+                      textAnchor="middle"
+                    >
+                      {seg.amount}
+                    </SvgText>
+                  )}
+                </G>
               );
             })}
           </Svg>
@@ -153,4 +177,3 @@ const styles = StyleSheet.create({
 export default SpinWheel;
 
 // FILE LOCATION: src/components/SpinWheel/SpinWheel.js (REPLACE existing file)
-// REQUIRES: react-native-svg (see setup command in the reply)
