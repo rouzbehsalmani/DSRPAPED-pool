@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { useEnergyStore } from "../../store/energyStore";
+import { COLORS, FONTS } from "../../theme/theme";
 
 // Vertical stamina/cooldown gauge shown on the right edge of every game
 // screen. Ticks once a second purely to re-read the lazily-computed energy
@@ -15,7 +16,7 @@ const EnergyBar = () => {
   }, []);
 
   const pct = Math.round(energy);
-  const fillColor = pct <= 20 ? "#E05555" : pct <= 50 ? "#E8B438" : "#4CAF50";
+  const fillColor = pct <= 20 ? COLORS.danger : pct <= 50 ? COLORS.goldDeep : COLORS.success;
 
   return (
     <View style={styles.container} pointerEvents="none">
@@ -42,16 +43,16 @@ const styles = StyleSheet.create({
     flex: 1,
     width: 14,
     borderRadius: 7,
-    backgroundColor: "#26264A",
+    backgroundColor: COLORS.bgChip,
     overflow: "hidden",
     justifyContent: "flex-end",
     borderWidth: 1,
-    borderColor: "#3A3A55"
+    borderColor: COLORS.border
   },
   fill: { width: "100%" },
-  pct: { color: "#AAAAC0", fontSize: 10, marginTop: 6, fontWeight: "700" }
+  pct: { color: COLORS.textSecondary, fontFamily: FONTS.semiBold, fontSize: 10, marginTop: 6 }
 });
 
 export default EnergyBar;
 
-// FILE LOCATION: src/components/EnergyBar/EnergyBar.js (NEW file)
+// FILE LOCATION: src/components/EnergyBar/EnergyBar.js (REPLACE existing file)

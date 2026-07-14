@@ -50,12 +50,14 @@ export const AUTO_SIMULATE_INTERVAL_MS = 2000;
 export const GAMEPLAY_AD_INTERVAL = 4;
 
 // Energy / stamina cooldown - every play costs ENERGY_PER_PLAY, and the bar
-// refills passively from 0 to ENERGY_MAX over ENERGY_FULL_REGEN_MS. This is
-// what keeps a play session from being over in a minute even though each
-// individual mini-game round is quick.
+// refills passively from 0 to ENERGY_MAX over ENERGY_FULL_REGEN_MS (or the
+// faster ENERGY_FULL_REGEN_MS_VIP for active VIP users). This is what keeps
+// a play session from being over in a minute even though each individual
+// mini-game round is quick.
 export const ENERGY_MAX = 100;
-export const ENERGY_PER_PLAY = 20; // 5 plays drains a full bar
-export const ENERGY_FULL_REGEN_MS = 10 * 60 * 1000; // 10 minutes, 0 -> 100
+export const ENERGY_PER_PLAY = 15; // ~6-7 plays drains a full bar
+export const ENERGY_FULL_REGEN_MS = 10 * 60 * 1000; // Free users: 10 min, 0 -> 100
+export const ENERGY_FULL_REGEN_MS_VIP = 5 * 60 * 1000; // VIP users: 5 min, 0 -> 100
 
 // ---------------------------------------------------------------------------
 // Phase 3-8: Mini-game prize configuration
@@ -64,9 +66,8 @@ export const ENERGY_FULL_REGEN_MS = 10 * 60 * 1000; // 10 minutes, 0 -> 100
 // and higher-value outcomes are rare. Prize shape: { type, amount }
 // type is one of "silver" | "gold" | "diamond" | "cash" | "dud"
 //
-// Spin Wheel segments now carry `icon` + `amount` (rendered as a small
-// vector icon + number on the wedge, see MaterialIcon) instead of a text
-// label - this is what keeps labels from spilling out of their wedge.
+// Spin Wheel segments carry `icon` + `amount` (rendered as a small vector
+// icon + number on the wedge, see MaterialIcon) instead of a text label.
 // Wedge WEIGHT still drives the real odds (see SpinWheel.js) even though
 // every wedge is drawn the same visual size, like a normal casino wheel.
 // ---------------------------------------------------------------------------

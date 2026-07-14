@@ -1,64 +1,100 @@
 import React, { useEffect } from "react";
+import { View, StyleSheet } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Drawer } from "expo-router/drawer";
+import {
+  useFonts,
+  Poppins_400Regular,
+  Poppins_500Medium,
+  Poppins_600SemiBold,
+  Poppins_700Bold
+} from "@expo-google-fonts/poppins";
 import { initAdNetwork } from "../src/services/adNetworkService";
+import { COLORS } from "../src/theme/theme";
 
 export default function RootLayout() {
+  const [fontsLoaded] = useFonts({
+    Poppins_400Regular,
+    Poppins_500Medium,
+    Poppins_600SemiBold,
+    Poppins_700Bold
+  });
+
   useEffect(() => {
     // Phase 10 - shuffles the ad-provider rotation order once per app
     // session (see src/services/adNetworkService.js / adProviders/index.js).
     initAdNetwork();
   }, []);
 
+  if (!fontsLoaded) {
+    return <View style={styles.loadingScreen} />;
+  }
+
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <Drawer
-        screenOptions={{
-          headerStyle: { backgroundColor: "#1A1A2E" },
-          headerTintColor: "#FFD700",
-          headerTitleStyle: { fontWeight: "700" },
-          drawerActiveTintColor: "#FFD700",
-          drawerInactiveTintColor: "#AAAAC0",
-          drawerActiveBackgroundColor: "#26264A",
-          drawerStyle: { backgroundColor: "#0F0F1E", width: 260 },
-          drawerLabelStyle: { fontSize: 14, fontWeight: "600" }
-        }}
-      >
-        <Drawer.Screen
-          name="index"
-          options={{ drawerLabel: "Main Game Selection", title: "DARPAPED" }}
-        />
-        <Drawer.Screen
-          name="wallet"
-          options={{ drawerLabel: "Wallet", title: "Wallet" }}
-        />
-        <Drawer.Screen
-          name="exchange"
-          options={{ drawerLabel: "Exchange (Convert Materials)", title: "Exchange" }}
-        />
-        <Drawer.Screen
-          name="subscription"
-          options={{ drawerLabel: "VIP Pass (Subscription)", title: "VIP Pass" }}
-        />
-        <Drawer.Screen
-          name="mega-pool"
-          options={{ drawerLabel: "Mega Pool Wheel", title: "Mega Pool Wheel" }}
-        />
-        <Drawer.Screen
-          name="vip-games"
-          options={{ drawerLabel: "VIP Games", title: "VIP Games" }}
-        />
-        <Drawer.Screen
-          name="debug"
-          options={{ drawerLabel: "Debug / Economy Test", title: "Debug Panel" }}
-        />
-        <Drawer.Screen
-          name="settings"
-          options={{ drawerLabel: "Settings", title: "Settings" }}
-        />
-      </Drawer>
+    <GestureHandlerRootView style={styles.root}>
+      {/* Caps the app to a phone-like width and centers it - on an actual
+          phone this is always wider than the screen so it has no visible
+          effect; on a wide desktop browser it stops the UI from stretching
+          into a "website" shape. */}
+      <View style={styles.frameOuter}>
+        <View style={styles.frameInner}>
+          <Drawer
+            screenOptions={{
+              headerStyle: { backgroundColor: COLORS.bgCard },
+              headerTintColor: COLORS.gold,
+              headerTitleStyle: { fontFamily: "Poppins_600SemiBold", fontSize: 16 },
+              drawerActiveTintColor: COLORS.gold,
+              drawerInactiveTintColor: COLORS.textSecondary,
+              drawerActiveBackgroundColor: COLORS.bgChip,
+              drawerStyle: { backgroundColor: COLORS.bgDark, width: 270 },
+              drawerLabelStyle: { fontFamily: "Poppins_500Medium", fontSize: 14 },
+              drawerItemStyle: { borderRadius: 12, marginHorizontal: 8 }
+            }}
+          >
+            <Drawer.Screen
+              name="index"
+              options={{ drawerLabel: "🎮  Main Game Selection", title: "DARPAPED" }}
+            />
+            <Drawer.Screen
+              name="wallet"
+              options={{ drawerLabel: "💰  Wallet", title: "Wallet" }}
+            />
+            <Drawer.Screen
+              name="exchange"
+              options={{ drawerLabel: "🔄  Exchange (Convert Materials)", title: "Exchange" }}
+            />
+            <Drawer.Screen
+              name="subscription"
+              options={{ drawerLabel: "👑  VIP Pass (Subscription)", title: "VIP Pass" }}
+            />
+            <Drawer.Screen
+              name="mega-pool"
+              options={{ drawerLabel: "🎡  Mega Pool Wheel", title: "Mega Pool Wheel" }}
+            />
+            <Drawer.Screen
+              name="vip-games"
+              options={{ drawerLabel: "⭐  VIP Games", title: "VIP Games" }}
+            />
+            <Drawer.Screen
+              name="debug"
+              options={{ drawerLabel: "🐞  Debug / Economy Test", title: "Debug Panel" }}
+            />
+            <Drawer.Screen
+              name="settings"
+              options={{ drawerLabel: "⚙️  Settings", title: "Settings" }}
+            />
+          </Drawer>
+        </View>
+      </View>
     </GestureHandlerRootView>
   );
 }
+
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: COLORS.bgDeep },
+  loadingScreen: { flex: 1, backgroundColor: COLORS.bgDeep },
+  frameOuter: { flex: 1, alignItems: "center" },
+  frameInner: { flex: 1, width: "100%", maxWidth: 460, backgroundColor: COLORS.bgDark }
+});
 
 // FILE LOCATION: app/_layout.js (REPLACE existing file)

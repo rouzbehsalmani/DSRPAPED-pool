@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { View, Text, StyleSheet, SafeAreaView } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import TopBar from "../TopBar/TopBar";
 import PrizeResultModal from "../PrizeResultModal/PrizeResultModal";
 import AdBreakModal from "../AdBreakModal/AdBreakModal";
@@ -9,7 +10,7 @@ import { useEconomyStore } from "../../store/economyStore";
 import { useSettingsStore } from "../../store/settingsStore";
 import { useEnergyStore } from "../../store/energyStore";
 import { showRewardedAd } from "../../services/adNetworkService";
-import { ENERGY_PER_PLAY } from "../../config/economyConfig";
+import { COLORS, GRADIENTS, RADIUS, FONTS, SPACING } from "../../theme/theme";
 
 const formatCountdown = (ms) => {
   const totalSeconds = Math.ceil(ms / 1000);
@@ -30,7 +31,7 @@ const formatCountdown = (ms) => {
 //   <GameScreenShell title="Spin the Wheel">
 //     {(handleResult) => <SpinWheel segments={...} onResult={handleResult} />}
 //   </GameScreenShell>
-const GameScreenShell = ({ title, subtitle, accentColor = "#FFFFFF", requireVip = false, children }) => {
+const GameScreenShell = ({ title, subtitle, accentColor = COLORS.textPrimary, requireVip = false, children }) => {
   const arpgCounterRef = useRef(null);
   const isVip = useSettingsStore((s) => s.isVip);
   const awardPrize = useEconomyStore((s) => s.awardPrize);
@@ -80,7 +81,7 @@ const GameScreenShell = ({ title, subtitle, accentColor = "#FFFFFF", requireVip 
   return (
     <SafeAreaView style={styles.safeArea}>
       <TopBar arpgCounterRef={arpgCounterRef} />
-      <View style={styles.body}>
+      <LinearGradient colors={GRADIENTS.background} style={styles.body}>
         <Text style={[styles.title, { color: accentColor }]}>{title}</Text>
         {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
 
@@ -92,9 +93,10 @@ const GameScreenShell = ({ title, subtitle, accentColor = "#FFFFFF", requireVip 
             <Text style={styles.rechargeSubtitle}>
               Come back in {formatCountdown(msUntilNextPlay())} for your next play
             </Text>
+            {isVip && <Text style={styles.rechargeVipNote}>VIP: 2x faster recharge</Text>}
           </View>
         )}
-      </View>
+      </LinearGradient>
 
       <EnergyBar />
 
@@ -110,22 +112,23 @@ const GameScreenShell = ({ title, subtitle, accentColor = "#FFFFFF", requireVip 
 };
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#0F0F1E" },
-  body: { flex: 1, padding: 20, alignItems: "center" },
-  title: { fontSize: 18, fontWeight: "700", marginBottom: 4, alignSelf: "flex-start" },
-  subtitle: { color: "#77779A", fontSize: 12, marginBottom: 8, alignSelf: "flex-start" },
+  safeArea: { flex: 1, backgroundColor: COLORS.bgDark },
+  body: { flex: 1, padding: SPACING.lg, alignItems: "center" },
+  title: { fontFamily: FONTS.bold, fontSize: 19, marginBottom: 4, alignSelf: "flex-start" },
+  subtitle: { color: COLORS.textMuted, fontFamily: FONTS.regular, fontSize: 12, marginBottom: 8, alignSelf: "flex-start" },
   rechargeCard: {
     marginTop: 60,
-    backgroundColor: "#1A1A2E",
-    borderRadius: 16,
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.lg,
     padding: 24,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#26264A",
+    borderColor: COLORS.border,
     width: "100%"
   },
-  rechargeTitle: { color: "#FFD700", fontSize: 16, fontWeight: "700", marginBottom: 8 },
-  rechargeSubtitle: { color: "#AAAAC0", fontSize: 13, textAlign: "center" }
+  rechargeTitle: { color: COLORS.gold, fontFamily: FONTS.semiBold, fontSize: 16, marginBottom: 8 },
+  rechargeSubtitle: { color: COLORS.textSecondary, fontFamily: FONTS.regular, fontSize: 13, textAlign: "center" },
+  rechargeVipNote: { color: COLORS.gold, fontFamily: FONTS.semiBold, fontSize: 11, marginTop: 10 }
 });
 
 export default GameScreenShell;

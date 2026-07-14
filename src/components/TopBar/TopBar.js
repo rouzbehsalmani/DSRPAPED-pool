@@ -2,8 +2,10 @@
 
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useEconomyStore } from "../../store/economyStore";
 import MaterialIcon from "../MaterialIcon/MaterialIcon";
+import { COLORS, GRADIENTS, RADIUS, FONTS } from "../../theme/theme";
 
 // Icon-only balance badges - no "Silver"/"Gold"/"Diamond"/"USD" words here.
 // The material name is only ever spelled out in the win modal (e.g. "3 Silver").
@@ -15,7 +17,7 @@ const TopBar = ({ arpgCounterRef }) => {
   const walletCashBalance = useEconomyStore((s) => s.walletCashBalance);
 
   return (
-    <View style={styles.container}>
+    <LinearGradient colors={GRADIENTS.topBar} style={styles.container}>
       <View style={styles.counter}>
         <MaterialIcon type="cash" size={16} />
         <Text style={styles.value}>{walletCashBalance.toFixed(4)}</Text>
@@ -36,7 +38,7 @@ const TopBar = ({ arpgCounterRef }) => {
         <MaterialIcon type="arpg" size={16} />
         <Text style={styles.value}>{arpg}</Text>
       </View>
-    </View>
+    </LinearGradient>
   );
 };
 
@@ -46,25 +48,26 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 12,
-    paddingVertical: 10,
-    backgroundColor: "#1A1A2E",
+    paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#2E2E48",
+    borderBottomColor: COLORS.border,
     flexWrap: "wrap",
     rowGap: 8
   },
   counter: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#26264A",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 10,
+    backgroundColor: "rgba(255,255,255,0.06)",
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: RADIUS.pill,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
     gap: 5
   },
   value: {
-    color: "#FFFFFF",
-    fontWeight: "600",
+    color: COLORS.textPrimary,
+    fontFamily: FONTS.semiBold,
     fontSize: 13
   }
 });

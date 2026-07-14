@@ -1,11 +1,21 @@
 import { create } from "zustand";
-import { ENERGY_MAX, ENERGY_PER_PLAY, ENERGY_FULL_REGEN_MS } from "../config/economyConfig";
+import {
+  ENERGY_MAX,
+  ENERGY_PER_PLAY,
+  ENERGY_FULL_REGEN_MS,
+  ENERGY_FULL_REGEN_MS_VIP
+} from "../config/economyConfig";
+import { useSettingsStore } from "./settingsStore";
+
+function currentRegenMs() {
+  return useSettingsStore.getState().isVip ? ENERGY_FULL_REGEN_MS_VIP : ENERGY_FULL_REGEN_MS;
+}
 
 // Acts as the game's "cooldown" - depletes a bit on every play, refills
-// passively over time (0 -> 100 takes ENERGY_FULL_REGEN_MS). Once it drops
-// below ENERGY_PER_PLAY, GameScreenShell blocks further play until enough
-// has regenerated. This is what keeps a play session from being over in a
-// minute even if the mini-games themselves are quick.
+// passively over time (0 -> 100 takes ENERGY_FULL_REGEN_MS, or the faster
+// ENERGY_FULL_REGEN_MS_VIP while the player has an active VIP Pass). Once it
+// drops below ENERGY_PER_PLAY, GameScreenShell blocks further play until
+// enough has regenerated.
 export const useEnergyStore = create((set, get) => ({
   energy: ENERGY_MAX,
   lastUpdatedAt: Date.now(),
@@ -19,7 +29,7 @@ export const useEnergyStore = create((set, get) => ({
     }
     const now = Date.now();
     const elapsed = now - lastUpdatedAt;
-    const regen = (elapsed / ENERGY_FULL_REGEN_MS) * ENERGY_MAX;
+    const regen = (elapsed / currentRegenMs()) * ENERGY_MAX;
     const nextEnergy = Math.min(ENERGY_MAX, energy + regen);
     set({ energy: nextEnergy, lastUpdatedAt: now });
   },
@@ -40,7 +50,7 @@ export const useEnergyStore = create((set, get) => ({
     const { energy } = get();
     if (energy >= ENERGY_PER_PLAY) return 0;
     const deficit = ENERGY_PER_PLAY - energy;
-    return (deficit / ENERGY_MAX) * ENERGY_FULL_REGEN_MS;
+    return (deficit / ENERGY_MAX) * currentRegenMs();
   },
 
   consumeEnergy: () => {
@@ -49,4 +59,4 @@ export const useEnergyStore = create((set, get) => ({
   }
 }));
 
-// FILE LOCATION: src/store/energyStore.js (NEW file)
+// FILE LOCATION: src/store/energyStore.js (REPLACE existing file)

@@ -1,15 +1,16 @@
 import React, { useRef, useState } from "react";
 import { View, Text, Animated, Easing, TouchableOpacity, StyleSheet } from "react-native";
-import Svg, { Path, G, Text as SvgText } from "react-native-svg";
+import { LinearGradient } from "expo-linear-gradient";
+import Svg, { Path } from "react-native-svg";
 import { pickWeightedIndex } from "../../utils/weightedRandom";
-import { getIconShapes } from "../MaterialIcon/materialIconShapes";
+import MaterialIcon from "../MaterialIcon/MaterialIcon";
+import { COLORS, GRADIENTS, FONTS } from "../../theme/theme";
 
 const SIZE = 260;
 const CENTER = SIZE / 2;
 const RADIUS = SIZE / 2 - 6;
-const ICON_BOX = 24; // materialIconShapes are authored in a 24x24 box
-const ICON_SIZE = 20; // rendered size inside a wedge
-const ICON_SCALE = ICON_SIZE / ICON_BOX;
+const LABEL_RADIUS = RADIUS * 0.82; // pushed close to the rim, away from center
+const LABEL_BOX = 40;
 
 const polarToCartesian = (cx, cy, r, angleDeg) => {
   const rad = ((angleDeg - 90) * Math.PI) / 180;
@@ -25,10 +26,12 @@ const describeWedge = (cx, cy, r, startAngle, endAngle) => {
 
 // A real circular wheel with EQUAL-SIZED wedges, like a normal casino wheel.
 // The real odds live only in each segment's `weight` (used to pick the
-// winner) - visual size never encodes probability, so the wheel always
-// looks standard while staying mathematically fair underneath.
-// Each wedge shows a small vector icon + a short number instead of a text
-// label, so nothing spills into the neighboring wedge.
+// winner) - visual size never encodes probability.
+//
+// Icon + number labels sit near the rim (not the center) and are
+// counter-rotated live against the wheel's own spin, so they always stay
+// horizontal / right-side-up on screen no matter how the wheel is
+// oriented - only their ORBIT position follows the wedge, not their tilt.
 // segments: [{ icon, amount, weight, color, prize }]
 const SpinWheel = ({ segments, onResult, disabled }) => {
   const [spinning, setSpinning] = useState(false);
@@ -52,8 +55,7 @@ const SpinWheel = ({ segments, onResult, disabled }) => {
 
     // Land exactly on the winner regardless of where the wheel currently
     // rests (fixes drift that would otherwise creep in after every repeat
-    // spin): compute how far to rotate FROM the current resting angle, not
-    // from an assumed start of 0.
+    // spin): compute how far to rotate FROM the current resting angle.
     const currentVisual = ((currentRotationRef.current % 360) + 360) % 360;
     const desiredVisual = (360 - midAngle) % 360;
     let delta = desiredVisual - currentVisual;
@@ -79,6 +81,15 @@ const SpinWheel = ({ segments, onResult, disabled }) => {
     outputRange: ["0deg", "360deg"]
   });
 
+  // Exact negative of the wheel's own rotation - applied to each label so
+  // its orientation cancels the parent's spin while its position (which
+  // also comes from the parent transform) still correctly orbits with the
+  // wedge underneath it.
+  const counterSpinDeg = rotation.interpolate({
+    inputRange: [0, 360],
+    outputRange: ["0deg", "-360deg"]
+  });
+
   return (
     <View style={styles.wrapper}>
       <View style={styles.wheelArea}>
@@ -87,40 +98,36 @@ const SpinWheel = ({ segments, onResult, disabled }) => {
           <Svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}>
             {wedges.map((seg, i) => (
               <Path
-                key={`wedge-${i}`}
+                key={i}
                 d={describeWedge(CENTER, CENTER, RADIUS, seg.startAngle, seg.endAngle)}
                 fill={seg.color}
                 stroke="#0F0F1E"
                 strokeWidth={2}
               />
             ))}
-            {wedges.map((seg, i) => {
-              const mid = seg.startAngle + sliceAngle / 2;
-              const iconPos = polarToCartesian(CENTER, CENTER, RADIUS * 0.68, mid);
-              const textPos = polarToCartesian(CENTER, CENTER, RADIUS * 0.42, mid);
-              const tx = iconPos.x - (ICON_BOX * ICON_SCALE) / 2;
-              const ty = iconPos.y - (ICON_BOX * ICON_SCALE) / 2;
-              return (
-                <G key={`label-${i}`}>
-                  <G transform={`translate(${tx} ${ty}) scale(${ICON_SCALE})`}>
-                    {getIconShapes(seg.icon)}
-                  </G>
-                  {seg.amount != null && (
-                    <SvgText
-                      x={textPos.x}
-                      y={textPos.y + 4}
-                      fontSize="11"
-                      fontWeight="700"
-                      fill="#0F0F1E"
-                      textAnchor="middle"
-                    >
-                      {seg.amount}
-                    </SvgText>
-                  )}
-                </G>
-              );
-            })}
           </Svg>
+
+          {wedges.map((seg, i) => {
+            const mid = seg.startAngle + sliceAngle / 2;
+            const pos = polarToCartesian(CENTER, CENTER, LABEL_RADIUS, mid);
+            return (
+              <Animated.View
+                key={i}
+                style={[
+                  styles.labelBox,
+                  {
+                    left: pos.x - LABEL_BOX / 2,
+                    top: pos.y - LABEL_BOX / 2,
+                    transform: [{ rotate: counterSpinDeg }]
+                  }
+                ]}
+                pointerEvents="none"
+              >
+                <MaterialIcon type={seg.icon} size={18} />
+                {seg.amount != null && <Text style={styles.labelAmount}>{seg.amount}</Text>}
+              </Animated.View>
+            );
+          })}
         </Animated.View>
         <View style={styles.hub}>
           <Text style={styles.hubText}>SPIN</Text>
@@ -128,12 +135,14 @@ const SpinWheel = ({ segments, onResult, disabled }) => {
       </View>
 
       <TouchableOpacity
-        style={[styles.spinButton, (spinning || disabled) && styles.spinButtonDisabled]}
         onPress={spin}
         disabled={spinning || disabled}
         activeOpacity={0.85}
+        style={(spinning || disabled) && styles.spinButtonDisabled}
       >
-        <Text style={styles.spinButtonText}>{spinning ? "Spinning..." : "Spin the Wheel"}</Text>
+        <LinearGradient colors={GRADIENTS.gold} style={styles.spinButton}>
+          <Text style={styles.spinButtonText}>{spinning ? "Spinning..." : "Spin the Wheel"}</Text>
+        </LinearGradient>
       </TouchableOpacity>
     </View>
   );
@@ -153,7 +162,20 @@ const styles = StyleSheet.create({
     borderTopWidth: 16,
     borderLeftColor: "transparent",
     borderRightColor: "transparent",
-    borderTopColor: "#FFD700"
+    borderTopColor: COLORS.gold
+  },
+  labelBox: {
+    position: "absolute",
+    width: LABEL_BOX,
+    height: LABEL_BOX,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  labelAmount: {
+    color: "#0F0F1E",
+    fontFamily: FONTS.bold,
+    fontSize: 11,
+    marginTop: 1
   },
   hub: {
     position: "absolute",
@@ -164,14 +186,14 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     backgroundColor: "#0F0F1E",
     borderWidth: 2,
-    borderColor: "#FFD700",
+    borderColor: COLORS.gold,
     alignItems: "center",
     justifyContent: "center"
   },
-  hubText: { color: "#FFD700", fontWeight: "800", fontSize: 11 },
-  spinButton: { backgroundColor: "#FFD700", paddingHorizontal: 36, paddingVertical: 14, borderRadius: 16 },
+  hubText: { color: COLORS.gold, fontFamily: FONTS.bold, fontSize: 11 },
+  spinButton: { paddingHorizontal: 36, paddingVertical: 14, borderRadius: 16 },
   spinButtonDisabled: { opacity: 0.5 },
-  spinButtonText: { color: "#1A1A2E", fontWeight: "800", fontSize: 15 }
+  spinButtonText: { color: "#1A1A2E", fontFamily: FONTS.bold, fontSize: 15 }
 });
 
 export default SpinWheel;
