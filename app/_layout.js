@@ -14,6 +14,7 @@ import { supabase, isSupabaseConfigured } from "../src/services/supabaseClient";
 import { syncProfile } from "../src/services/profileSync";
 import AppHeader from "../src/components/AppHeader/AppHeader";
 import AppMenu from "../src/components/AppMenu/AppMenu";
+import WebAdScripts from "../src/components/WebAdScripts/WebAdScripts";
 import { COLORS } from "../src/theme/theme";
 
 // Auth gate: only active once Supabase keys exist (see .env.example). Until
@@ -42,9 +43,6 @@ function useAuthGate() {
       router.replace("/");
     }
     if (session) {
-      // Pulls the REAL persisted balance/VIP status down from Supabase -
-      // this is what makes numbers survive a refresh instead of always
-      // starting back at 0 (see src/services/profileSync.js).
       syncProfile();
     }
   }, [session, segments]);
@@ -71,6 +69,10 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={styles.root}>
+      {/* Adsterra Popunder + Social Bar - web build only, see the
+          component's own comment for why this is separate from the
+          rewarded-ad-provider rotation used inside gameplay. */}
+      <WebAdScripts />
       <View style={styles.frameOuter}>
         <View style={[styles.frameInner, { userSelect: "none" }]}>
           <Stack screenOptions={{ header: (props) => <AppHeader {...props} /> }}>
@@ -107,8 +109,3 @@ const styles = StyleSheet.create({
 });
 
 // FILE LOCATION: app/_layout.js (REPLACE existing file)
-// NOTE: "debug" screen removed from this Stack. Delete app/debug.js from
-// your project too (see the PowerShell command in the reply) - just
-// removing it from this list stops it from being a Stack.Screen entry with
-// custom options, but expo-router still auto-routes any file under app/,
-// so the file itself needs to go for /debug to truly disappear.
